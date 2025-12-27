@@ -40,9 +40,31 @@ def sum_invalids(fp, is_invalid: Callable):
     )
 
 
+def has_repeats(n: int):
+    num_digits = math.floor(math.log10(n)) + 1
+    factors = filter(lambda n: num_digits % n == 0, range(1, num_digits // 2 + 1))
+
+    for d in factors:
+        n_part = n // (10 ** (num_digits - d))
+        n_full = 0
+        repeats = num_digits // d
+        for r in range(repeats):
+            n_full += n_part * (10**d) ** r
+
+        if n_full == n:
+            return True
+
+    return False
+
+
 def main():
+    # Part 1
     assert sum_invalids("p02_example.txt", has_two_repeats) == 1227775554
     assert sum_invalids("p02_data.txt", has_two_repeats) == 19128774598
+
+    # Part 2
+    assert sum_invalids("p02_example.txt", has_repeats) == 4174379265
+    assert sum_invalids("p02_data.txt", has_repeats) == 21932258645
 
 
 main()
