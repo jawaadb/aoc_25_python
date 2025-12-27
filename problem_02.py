@@ -46,10 +46,8 @@ def has_repeats(n: int):
 
     for d in factors:
         n_part = n // (10 ** (num_digits - d))
-        n_full = 0
         repeats = num_digits // d
-        for r in range(repeats):
-            n_full += n_part * (10**d) ** r
+        n_full = sum(n_part * (10**d) ** r for r in range(repeats))
 
         if n_full == n:
             return True
