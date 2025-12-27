@@ -13,27 +13,18 @@ def pad(mat: np.ndarray):
     return res
 
 
-def convolve2d(mA: np.ndarray, mB: np.ndarray):
-    res = np.int64(
-        [
-            np.sum(
-                [
-                    np.convolve((mA[ir, :]), mB[jr, :], "same")
-                    for jr in range(mB.shape[0])
-                ],
-                axis=0,
-            )
-            for ir in range(1, mA.shape[0] - 1)
-        ]
-    )[:, 1:-1]
-
-    return res
+def unpad(mat: np.ndarray):
+    return mat[1 : mat.shape[0] - 1, 1 : mat.shape[1] - 1]
 
 
 def solve(fp):
-    mat_pad = pad(mat := load_map(fp))
+    return solve_once(load_map(fp))[0]
 
-    res = np.zeros(mat_pad.shape, np.int64)
+
+def solve_once(mat):
+    mat_pad = pad(mat)
+
+    adj_count = np.zeros(mat_pad.shape, np.int64)
 
     for ir in range(1, mat_pad.shape[0] - 1):
         for ic in range(1, mat_pad.shape[1] - 1):
@@ -42,18 +33,39 @@ def solve(fp):
                 ic - 1 : ic + 2,
             ]
             if mat_local[1, 1] == 1:
-                res[ir, ic] = np.sum(mat_local * mat_pad[ir, ic]) - 1
+                adj_count[ir, ic] = np.sum(mat_local * mat_pad[ir, ic]) - 1
             else:
-                res[ir, ic] = 0
+                adj_count[ir, ic] = 0
 
-    res = res[1 : res.shape[0] - 1, 1 : res.shape[1] - 1]
+    adj_count = unpad(adj_count)
 
-    return np.sum((res < 4) * (mat != 0))
+    removable = adj_count < 4
+
+    mat_out = mat.copy()
+    mat_out[removable] = 0
+    total_removed = np.sum(removable * (mat != 0))
+    return total_removed, mat_out
+
+
+def solve_iter(fp):
+    mat = load_map(fp)
+
+    rem_sum = 0
+    removed = -1
+
+    while removed != 0:
+        removed, mat = solve_once(mat)
+        rem_sum += removed
+
+    return rem_sum
 
 
 def main():
     assert solve("p04_example.txt") == 13
     assert solve("p04_data.txt") == 1397
+
+    assert solve_iter("p04_example.txt") == 43
+    assert solve_iter("p04_data.txt") == 8758
 
 
 main()
