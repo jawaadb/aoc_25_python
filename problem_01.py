@@ -3,7 +3,9 @@ from helpers import load_text
 
 
 def load_deltas(fp):
-    return [{"L": -1, "R": 1}[l[0]] * int(l[1:]) for l in map(str.strip, load_text(fp))]
+    return [
+        {"L": -1, "R": 1}[l[0]] * int(l[1:]) for l in load_text(fp).strip().split("\n")
+    ]
 
 
 def solve_part1(fp):
