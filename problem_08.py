@@ -50,6 +50,8 @@ def connect_shortest(
 
     distill(conn_mat_distilled)
 
+    return coords[0, :]
+
 
 def is_distilled(conn_mat: np.ndarray) -> bool:
     return np.all(np.sum(conn_mat, axis=0) == 1)
@@ -93,9 +95,35 @@ def solve(fp, num_of_connections, num_to_take):
     return np.prod(list(map(np.size, groups[:num_to_take])))
 
 
+def solve2(fp) -> int:
+    arr = load(fp)
+
+    dist_mat = calc_dist_mat(arr)
+    conn_mat = np.eye(arr.shape[0], dtype=np.bool)
+    conn_mat_distilled = conn_mat.copy()
+
+    while True:
+        coords = connect_shortest(dist_mat, conn_mat, conn_mat_distilled)
+
+        num_groups = np.sum(np.any(conn_mat_distilled, axis=1))
+        print(
+            f"num_groups: {num_groups:>3d} / {conn_mat_distilled.shape[0]}",
+            end="\r",
+            flush=True,
+        )
+        if num_groups == 1:
+            print()
+            break
+
+    return np.prod(arr[coords, 0])
+
+
 def main():
     assert solve("p08_example.txt", 10, 3) == 40
     assert solve("p08_data.txt", 1000, 3) == 123234
+
+    assert solve2("p08_example.txt") == 25272
+    assert solve2("p08_data.txt") == 9259958565
 
 
 main()
