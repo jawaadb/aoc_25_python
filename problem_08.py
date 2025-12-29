@@ -43,25 +43,22 @@ def connect_shortest(dist_mat: np.ndarray, conn_mat: np.ndarray):
 
 
 def is_distilled(conn_mat: np.ndarray) -> bool:
-    for i, irow in enumerate(conn_mat):
-        for j, jrow in enumerate(conn_mat):
-            if i == j:
-                continue
-            if np.any(irow & jrow):
-                return False
-    return True
+    return np.all(np.sum(conn_mat, axis=0) == 1)
+
+
+def distill(conn_mat: np.ndarray):
+    idx_dups = np.where(np.sum(conn_mat, axis=0) > 1)[0]
+    for ic in idx_dups:
+        idx_rows = np.where(conn_mat[:, ic])[0]
+        row_union = np.any(conn_mat[idx_rows, :], axis=0)
+        conn_mat[idx_rows[0], :] = row_union
+        conn_mat[idx_rows[1:], :] = False
+
+    assert is_distilled(conn_mat)
 
 
 def calc_connection_sets(conn_mat: np.ndarray):
-    while not is_distilled(conn_mat):
-        for i, irow in enumerate(conn_mat):
-            for j, jrow in enumerate(conn_mat):
-                if i == j:
-                    continue
-                if not np.any(irow & jrow):
-                    continue
-                jrow[:] = irow | jrow
-                irow[:] = False
+    distill(conn_mat)
 
     indices = np.arange(conn_mat.shape[1])
     groups = sorted(
