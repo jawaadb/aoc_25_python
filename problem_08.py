@@ -36,10 +36,19 @@ def find_shortest_not_connected(dist_mat: np.ndarray, conn_mat: np.ndarray):
     return coords
 
 
-def connect_shortest(dist_mat: np.ndarray, conn_mat: np.ndarray):
+def connect_shortest(
+    dist_mat: np.ndarray, conn_mat: np.ndarray, conn_mat_distilled: np.ndarray
+):
     coords = find_shortest_not_connected(dist_mat, conn_mat)
+    assert np.all(coords[0, :] == coords[1, ::-1])
     for pt in coords:
         conn_mat[*pt] = True
+        conn_mat_distilled[*pt] = True
+
+    for i in coords[0, :]:
+        conn_mat_distilled[i, i] = True
+
+    distill(conn_mat_distilled)
 
 
 def is_distilled(conn_mat: np.ndarray) -> bool:
@@ -58,7 +67,7 @@ def distill(conn_mat: np.ndarray):
 
 
 def calc_connection_sets(conn_mat: np.ndarray):
-    distill(conn_mat)
+    assert is_distilled(conn_mat)
 
     indices = np.arange(conn_mat.shape[1])
     groups = sorted(
@@ -74,11 +83,13 @@ def solve(fp, num_of_connections, num_to_take):
 
     dist_mat = calc_dist_mat(arr)
     conn_mat = np.eye(arr.shape[0], dtype=np.bool)
+    conn_mat_distilled = conn_mat.copy()
 
     for _ in range(num_of_connections):
-        connect_shortest(dist_mat, conn_mat)
+        connect_shortest(dist_mat, conn_mat, conn_mat_distilled)
 
-    groups = calc_connection_sets(conn_mat)
+    assert is_distilled(conn_mat_distilled)
+    groups = calc_connection_sets(conn_mat_distilled)
     return np.prod(list(map(np.size, groups[:num_to_take])))
 
 
